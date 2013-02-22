@@ -43,12 +43,12 @@ def listChannelVideos(url):
         max=int(match[0])
         spl=content.split('<article class=')
         for i in range(1,len(spl),1):
-            entry=spl[i]
-            match=re.compile("href='(.+?)'", re.DOTALL).findall(entry)
+            entry=spl[i].replace("\\","")
+            match=re.compile('href="(.+?)"', re.DOTALL).findall(entry)
             url=match[0]
-            match=re.compile("src='(.+?)'", re.DOTALL).findall(entry)
+            match=re.compile('src="(.+?)"', re.DOTALL).findall(entry)
             thumb=match[0]
-            match=re.compile("<img alt='\\[(.+?)\\]", re.DOTALL).findall(entry)
+            match=re.compile('alt="\\[(.+?)\\]', re.DOTALL).findall(entry)
             title=match[0]
             title=cleanTitle(title)
             match=re.compile('<p>(.+?)</p>', re.DOTALL).findall(entry)
@@ -87,6 +87,8 @@ def playVideo(url):
           match2=re.compile("icon: '(.+?)'", re.DOTALL).findall(content)
           match3=re.compile("youtubeid=(.+?)&", re.DOTALL).findall(content)
           match4=re.compile("callForInfo: '(.+?)',", re.DOTALL).findall(content)
+          match5=re.compile('src="http://www.theonion.com/video_embed/\\?id=(.+?)"', re.DOTALL).findall(content)
+          url=""
           if len(match1)>0:
             url=match1[0]+"?"+match2[0]
             if match4[0]=="true":
@@ -106,6 +108,12 @@ def playVideo(url):
               url = "plugin://video/YouTube/?path=/root/video&action=play_video&videoid=" + match3[0]
             else:
               url = "plugin://plugin.video.youtube/?path=/root/video&action=play_video&videoid=" + match3[0]
+          elif len(match5)>0:
+            content = getUrl("http://www.theonion.com/video_embed/?id="+match5[0])
+            match=re.compile('<source src="(.+?)" type="(.+?)">', re.DOTALL).findall(content)
+            for urlTemp, type in match:
+              if type=="video/mp4":
+                url=urlTemp
           listitem = xbmcgui.ListItem(path=url)
           return xbmcplugin.setResolvedUrl(pluginhandle, True, listitem)
 
