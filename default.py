@@ -13,19 +13,20 @@ viewMode=str(addon.getSetting("viewMode"))
 def index():
         addDir(translation(30001),"http://www.break.com/content/GetContentTimeStreamByChannelIdAndFilterBy?channelId=1&filterBy=videos&pageNum=1",'listChannelVideos',"")
         addDir(translation(30002),"http://www.break.com/content/GetContentByPageModuleAndPageTypeAndFilterBy?pageModuleTypeId=5&pageTypeId=4&filterBy=Daily&channelId=0&categoryId=0&numberOfContent=12",'listVideos',"")
-        content = getUrl("http://www.break.com")
-        spl=content.split('<a class="tip"')
+        content = getUrl("http://www.break.com/channels/")
+        content = content[content.find('class="channel-menu"'):]
+        content = content[:content.find('</ul>'):]
+        spl=content.split('<li class')
         for i in range(1,len(spl),1):
             entry=spl[i]
             match=re.compile('href="(.+?)"', re.DOTALL).findall(entry)
             url=match[0]
-            match=re.compile('src="(.+?)"', re.DOTALL).findall(entry)
-            thumb=match[0]
-            match=re.compile("<h1><span>(.+?)</span></h1>", re.DOTALL).findall(entry)
-            title=match[0]
+            match=re.compile('src="(.+?)">(.+?)<', re.DOTALL).findall(entry)
+            #thumb=match[0][0]
+            title=match[0][1].strip()
             title=cleanTitle(title)
             if url!="http://www.break.com/action-unleashed/":
-              addDir(title,url,'listChannel',thumb)
+              addDir(title,url,'listChannel',"")
         addDir(translation(30004),"",'search',"")
         xbmcplugin.endOfDirectory(pluginhandle)
         if forceViewMode=="true":
@@ -52,7 +53,7 @@ def listChannelVideos(url):
                 id = id[:id.find("/")]
             match=re.compile('src="(.+?)"', re.DOTALL).findall(entry)
             thumb=match[0]
-            match=re.compile('alt="\\[(.+?)\\]', re.DOTALL).findall(entry)
+            match=re.compile('alt="(.+?)"', re.DOTALL).findall(entry)
             title=match[0]
             title=cleanTitle(title)
             match=re.compile('<p>(.+?)</p>', re.DOTALL).findall(entry)
@@ -138,7 +139,7 @@ def playVideo(id):
                   if vidHeight>max:
                     finalUrl=url.replace(".wmv",".flv")+"?"+matchAuth[0]
           listitem = xbmcgui.ListItem(path=finalUrl)
-          return xbmcplugin.setResolvedUrl(pluginhandle, True, listitem)
+          xbmcplugin.setResolvedUrl(pluginhandle, True, listitem)
 
 def search():
         keyboard = xbmc.Keyboard('', translation(30004))
@@ -152,7 +153,7 @@ def cleanTitle(title):
 
 def getUrl(url):
         req = urllib2.Request(url)
-        req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; rv:19.0) Gecko/20100101 Firefox/19.0')
+        req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; rv:23.0) Gecko/20100101 Firefox/23.0')
         response = urllib2.urlopen(req)
         link=response.read()
         response.close()
